@@ -12,7 +12,7 @@ upload, extraction, chunking, or answer generation. Those concerns remain in Pha
 
 - PostgreSQL remains the primary database.
 - The `pgvector` PostgreSQL extension stores and searches embeddings.
-- Ollama generates embeddings with `nomic-embed-text`.
+- Ollama generates embeddings with `qwen3-embedding:0.6b`.
 - FastAPI exposes note creation and search endpoints.
 - React provides note creation and search workflows.
 - Automated tests replace Ollama and database calls with controlled test doubles.
@@ -26,14 +26,15 @@ The new `notes` table contains:
 - `id`: UUID primary key
 - `title`: required text
 - `content`: required text
-- `embedding`: required pgvector vector
+- `embedding`: required pgvector vector with 1024 dimensions
 - `embedding_model`: required text
 - `created_at`: required timezone-aware timestamp
 - `updated_at`: required timezone-aware timestamp
 
-The vector dimension must match the selected embedding model and must be explicitly
-recorded in the migration and application configuration. A model change that produces
-a different dimension requires a deliberate migration or re-embedding workflow.
+The vector dimension is fixed at 1024 to match `qwen3-embedding:0.6b`. The dimension
+and model name are explicitly recorded in the migration and application configuration.
+A model change requires a deliberate migration review and re-embedding workflow, even
+when the replacement model uses the same vector dimension.
 
 Notes are stored as complete texts during Phase 6. They are not divided into chunks.
 
@@ -42,7 +43,11 @@ Notes are stored as complete texts during Phase 6. They are not divided into chu
 ### Embedding Client
 
 The embedding client owns communication with the Ollama embedding endpoint. It accepts
-text and returns a validated numeric vector.
+text and returns a validated numeric vector containing exactly 1024 finite numbers.
+
+Stored notes are embedded as documents without a retrieval instruction. Search queries
+use a stable English retrieval instruction describing the task of finding relevant
+notes. The instruction is application configuration rather than user input.
 
 Provider-specific transport errors and invalid provider responses are converted into
 application-specific embedding errors. Routes do not depend directly on `httpx` or
@@ -127,8 +132,9 @@ with semantic similarity.
 
 ### Semantic Search
 
-The backend embeds the query using the same model used for stored notes. The repository
-uses pgvector distance operations to retrieve the nearest notes.
+The backend embeds the instructed query using the same model and dimensions used for
+stored notes. The repository uses pgvector distance operations to retrieve the nearest
+notes.
 
 Cosine distance is the initial similarity strategy. The database index strategy is
 introduced only after correctness is verified with a small dataset. Phase 6 should
@@ -248,7 +254,8 @@ and readiness for document chunking and RAG.
 
 - Notes are stored separately from analysis history.
 - PostgreSQL stores embeddings using pgvector.
-- Ollama generates embeddings through a typed backend boundary.
+- Ollama generates 1024-dimensional `qwen3-embedding:0.6b` vectors through a typed
+  backend boundary.
 - Note creation is transactional and does not expose raw vectors.
 - Keyword and semantic search share one typed API response.
 - The React UI creates and searches notes in both modes.
