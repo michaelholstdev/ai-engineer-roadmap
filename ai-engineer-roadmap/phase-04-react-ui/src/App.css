@@ -1,0 +1,43 @@
+.app {
+  padding: 0 120px;
+}
+
+@media (max-width: 640px) {
+  .app {
+    padding: 0 20px;
+  }
+}
+
+.analyze-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  text-align: left;
+}
+
+.history-list {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.history-item {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.history-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0;
+  list-style: none;
+}
