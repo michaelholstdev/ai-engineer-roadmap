@@ -1956,3 +1956,47 @@ docker compose exec postgres psql -U ai_roadmap -d ai_roadmap -c "\d analysis_ru
 ### Next Step
 
 - Start Phase 6 by designing the document, chunk, embedding-model, vector-dimension, and similarity-search boundaries.
+
+## 2026-06-11 — Phase 6 Preparation — Embeddings and Semantic Search
+
+### Status
+
+Ready to start
+
+### What I Prepared
+
+- Designed a separate `notes` domain for semantic search.
+- Selected PostgreSQL with pgvector instead of an additional vector database.
+- Selected local Ollama embeddings with `qwen3-embedding:0.6b`.
+- Fixed the vector dimension at 1024.
+- Defined a shared API shape for keyword and semantic search.
+- Planned React workflows for creating and searching notes.
+- Added nine Phase 6 lesson files.
+- Updated the roadmap and task tracker for Phase 6.
+
+### Architecture Decisions
+
+- `analysis_runs` remains the analysis-history model.
+- Notes are stored as complete texts in Phase 6.
+- Document upload and chunking remain in Phase 7.
+- Stored notes use document embeddings without a retrieval instruction.
+- Search queries use a stable English retrieval instruction.
+- Keyword search uses PostgreSQL full-text search.
+- Semantic search uses exact pgvector cosine distance before considering approximate indexes.
+- Automated tests mock database and Ollama boundaries by default.
+
+### Lesson Plan
+
+- Lesson 6.1 — Embedding and Vector Search Concepts
+- Lesson 6.2 — pgvector Setup and Notes Schema
+- Lesson 6.3 — Embedding Client Boundary
+- Lesson 6.4 — Store Notes with Embeddings
+- Lesson 6.5 — Keyword Search
+- Lesson 6.6 — Semantic Search
+- Lesson 6.7 — Notes and Search UI
+- Lesson 6.8 — Full-Stack Search Comparison
+- Lesson 6.9 — Phase Review
+
+### Next Step
+
+- Start Lesson 6.1 and review the embedding, vector-dimension, similarity, and domain-boundary concepts.

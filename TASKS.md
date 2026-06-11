@@ -4,80 +4,100 @@ This file tracks the current learning tasks. You, the learner, implement the cod
 
 ## Current Phase
 
-Phase 5 — PostgreSQL and Persistence
+Phase 6 — Embeddings and Semantic Search
 
 ## Current Lesson
 
-Lesson 5.1 — Persistence Concepts and Setup
+Lesson 6.1 — Embedding and Vector Search Concepts
 
 ## Active Tasks
 
-### Lesson 5.1 — Persistence Concepts and Setup
+### Lesson 6.1 — Embedding and Vector Search Concepts
 
-- [ ] Review what data should eventually be stored.
-- [ ] Decide how PostgreSQL will run locally.
-- [ ] Add database environment variable documentation.
-- [ ] Decide how tests will avoid depending on an uncontrolled real database.
+- [ ] Compare keyword matching with semantic similarity.
+- [ ] Define the notes, embeddings, and search-result boundaries.
+- [ ] Record `qwen3-embedding:0.6b` and 1024 vector dimensions.
+- [ ] Define document and query embedding formats.
+- [ ] Confirm that chunking remains in Phase 7.
 - [ ] Run existing backend and frontend checks.
 - [ ] Ask Codex for review.
 
 ## Upcoming Tasks
 
-### Lesson 5.2 — Database Schema and Migrations
+### Lesson 6.2 — pgvector Setup and Notes Schema
 
-- [ ] Choose a migration tool or migration workflow.
-- [ ] Design an `analysis_runs` table.
-- [ ] Create and apply the first migration.
-- [ ] Document how to run migrations.
+- [ ] Use a PostgreSQL image that includes pgvector.
+- [ ] Enable the `vector` extension through Alembic.
+- [ ] Create the `notes` table with `vector(1024)`.
+- [ ] Add reversible migrations and schema constraints.
+- [ ] Apply and inspect the migration locally.
+- [ ] Document pgvector setup and migration commands.
 - [ ] Ask Codex for review.
 
-### Lesson 5.3 — Backend Repository Boundary
+### Lesson 6.3 — Embedding Client Boundary
 
-- [ ] Create a small repository module for analysis history.
-- [ ] Define typed input/output shapes for stored records.
-- [ ] Keep routes free of raw database details.
-- [ ] Add tests for repository-facing behavior.
+- [ ] Add tests for valid and invalid Ollama embedding responses.
+- [ ] Configure `qwen3-embedding:0.6b`, 1024 dimensions, endpoint, and timeout.
+- [ ] Implement separate document and query embedding operations.
+- [ ] Add a stable retrieval instruction to query inputs.
+- [ ] Convert provider failures into application-specific errors.
 - [ ] Ask Codex for review.
 
-### Lesson 5.4 — Store Analysis Results
+### Lesson 6.4 — Store Notes with Embeddings
 
-- [ ] Store successful `/analyze` results.
-- [ ] Store successful `/ai/analyze` results.
-- [ ] Avoid storing validation or provider failures as successful records.
-- [ ] Add backend tests for storage behavior.
+- [ ] Define typed note-create and note-response models.
+- [ ] Add repository tests for inserting notes and vectors.
+- [ ] Create a service coordinating embedding and persistence.
+- [ ] Ensure embedding failures do not persist notes.
+- [ ] Add and test `POST /notes`.
 - [ ] Ask Codex for review.
 
-### Lesson 5.5 — History API Endpoint
+### Lesson 6.5 — Keyword Search
 
-- [ ] Add a typed response model for history records.
-- [ ] Add a history list endpoint.
-- [ ] Return newest records first with a small limit strategy.
-- [ ] Add backend tests for empty and non-empty history.
+- [ ] Define the shared search-result domain model.
+- [ ] Add PostgreSQL full-text-search repository tests.
+- [ ] Implement ranked and deterministic keyword search.
+- [ ] Add `mode=keyword` service and API behavior.
+- [ ] Validate search query and limit parameters.
 - [ ] Ask Codex for review.
 
-### Lesson 5.6 — Frontend History View
+### Lesson 6.6 — Semantic Search
 
-- [ ] Add a typed frontend API client function for history.
-- [ ] Render a history section in the React UI.
-- [ ] Handle empty, loading, success, and error states.
-- [ ] Add frontend tests for history behavior.
+- [ ] Add repository tests for cosine-distance ordering.
+- [ ] Implement exact pgvector semantic search.
+- [ ] Generate one instructed query embedding per search.
+- [ ] Add `mode=semantic` API behavior and provider-error mapping.
+- [ ] Return the shared search-result response.
 - [ ] Ask Codex for review.
 
-### Lesson 5.7 — Full-Stack Persistence Run
+### Lesson 6.7 — Notes and Search UI
 
-- [ ] Start PostgreSQL locally.
-- [ ] Run migrations.
-- [ ] Start backend and frontend.
-- [ ] Verify stored records appear in the history view.
-- [ ] Update README instructions for the persistence workflow.
+- [ ] Add typed note and search API-client operations.
+- [ ] Build and test the note creation form.
+- [ ] Build the search form with a keyword/semantic segmented control.
+- [ ] Render both modes with one result component.
+- [ ] Test loading, empty, success, validation, and error states.
 - [ ] Ask Codex for review.
 
-### Lesson 5.8 — Phase Review
+### Lesson 6.8 — Full-Stack Search Comparison
 
-- [ ] Run backend checks.
-- [ ] Run frontend checks.
-- [ ] Review schema, migrations, repository boundaries, API behavior, tests, and docs.
-- [ ] Summarize what you learned.
+- [ ] Start pgvector PostgreSQL and apply migrations.
+- [ ] Pull and verify `qwen3-embedding:0.6b`.
+- [ ] Start Ollama, FastAPI, and React.
+- [ ] Create a controlled set of test notes.
+- [ ] Compare keyword and semantic result rankings.
+- [ ] Update setup, verification, and troubleshooting documentation.
+- [ ] Run all automated checks.
+- [ ] Ask Codex for review.
+
+### Lesson 6.9 — Phase Review
+
+- [ ] Run backend and frontend checks.
+- [ ] Review schema, model, dimensions, migrations, and boundaries.
+- [ ] Review keyword and semantic retrieval behavior.
+- [ ] Review test isolation and full-stack documentation.
+- [ ] Summarize learning, remaining risks, and Phase 7 readiness.
+- [ ] Ask Codex for final Phase 6 review.
 
 ## Rules
 

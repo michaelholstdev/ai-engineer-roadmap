@@ -171,11 +171,24 @@ AI analysis history stored in PostgreSQL.
 - Understand embeddings.
 - Implement semantic search.
 - Compare keyword search and vector search.
-- Use pgvector or Qdrant.
+- Use pgvector with PostgreSQL.
+
+### Lessons
+
+- Lesson 6.1 — Embedding and Vector Search Concepts
+- Lesson 6.2 — pgvector Setup and Notes Schema
+- Lesson 6.3 — Embedding Client Boundary
+- Lesson 6.4 — Store Notes with Embeddings
+- Lesson 6.5 — Keyword Search
+- Lesson 6.6 — Semantic Search
+- Lesson 6.7 — Notes and Search UI
+- Lesson 6.8 — Full-Stack Search Comparison
+- Lesson 6.9 — Phase Review
 
 ### Output
 
-Semantic search over stored notes or documents.
+Keyword and semantic search over embedded notes using PostgreSQL, pgvector, Ollama,
+FastAPI, and React.
 
 ## Phase 7 — RAG
 

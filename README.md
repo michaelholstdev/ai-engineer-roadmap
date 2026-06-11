@@ -67,13 +67,14 @@ ai-engineer-roadmap/
     portfolio-criteria.md
   lessons/
     phase-01-python/
-      lesson-01-project-setup.md
-      lesson-02-text-statistics.md
-      lesson-03-testing-and-quality.md
     phase-02-fastapi/
-      lesson-01-fastapi-basics.md
     phase-03-llm/
-      lesson-01-llm-integration.md
+    phase-04-react-ui/
+    phase-05-postgresql-persistence/
+    phase-06-embeddings-semantic-search/
+  ai-engineer-roadmap/
+    phase-01-python/
+    phase-04-react-ui/
   templates/
     lesson-template.md
     progress-entry-template.md
