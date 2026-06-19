@@ -2000,3 +2000,142 @@ Ready to start
 ### Next Step
 
 - Start Lesson 6.1 and review the embedding, vector-dimension, similarity, and domain-boundary concepts.
+
+## 2026-06-15 — Lesson 6.1 — Embedding and Vector Search Concepts
+
+### Status
+
+Completed
+
+### What I Designed
+
+- Separated searchable notes from the existing `analysis_runs` history.
+- Defined notes as human-readable `title` and `content`.
+- Defined embeddings as derived numerical representations rather than domain content.
+- Defined search results as notes combined with search mode and relevance metadata.
+- Fixed the embedding model at `qwen3-embedding:0.6b` with 1024 dimensions.
+- Defined separate document and instructed query embedding inputs.
+- Kept document chunking outside Phase 6.
+
+### Commands Run
+
+```bash
+uv run pytest
+uv run ruff check .
+uv run mypy src
+pnpm run test
+pnpm run lint
+pnpm run build
+```
+
+### Test Results
+
+- Backend `pytest`: 53 passed
+- Backend `ruff`: all checks passed
+- Backend `mypy`: no issues found in 9 source files
+- Frontend `vitest`: 36 passed
+- Frontend `eslint`: no errors
+- Frontend production build: passed
+
+### What I Learned
+
+- Keyword search depends on lexical overlap, while semantic search can retrieve related meanings expressed with different words.
+- An embedding does not contain priority or accuracy; similarity appears only when vectors are compared.
+- Vectors with different dimensions cannot be compared.
+- Vectors from different models occupy incompatible semantic spaces even when their dimensions match.
+- Smaller cosine distance means greater semantic similarity.
+- Note creation and semantic search are separate workflows.
+- Short notes can use one embedding, while long Phase 7 documents need chunks for focused retrieval and citations.
+
+### What Was Difficult
+
+- Separating keyword matches from semantic matches in examples without shared words.
+- Distinguishing the responsibilities of notes, embeddings, and search results.
+- Understanding the difference between a technically impossible dimension mismatch and a semantically invalid model mismatch.
+- Keeping note creation separate from the search workflow.
+
+### Tutor Review Summary
+
+- The note, embedding, and search-result boundaries are now clear.
+- `analysis_runs` remains independent from semantic-search data.
+- The model and 1024-dimensional vector contract are explicit.
+- Document and query embedding inputs have separate purposes.
+- Cosine distance ordering and the need for consistent embedding spaces are understood.
+- Phase 6 remains focused on complete notes; document chunking remains in Phase 7.
+
+### Next Step
+
+- Start Lesson 6.2 and add pgvector plus the initial `notes` schema through Alembic.
+
+## 2026-06-19 — Lesson 6.2 — pgvector Setup and Notes Schema
+
+### Status
+
+Completed
+
+### What I Built
+
+- Switched the local PostgreSQL container image to `pgvector/pgvector:pg17`.
+- Created Alembic revision `6ee40cc8e639_create_notes_table.py`.
+- Enabled the PostgreSQL `vector` extension through the migration.
+- Created the `notes` table with `title`, `content`, `embedding`, `embedding_model`, `created_at`, and `updated_at`.
+- Set `notes.embedding` to `vector(1024)` for `qwen3-embedding:0.6b`.
+- Added non-blank database constraints for `title`, `content`, and `embedding_model`.
+- Documented pgvector and the notes embedding schema in the backend README.
+
+### Commands Run
+
+```bash
+docker compose down -v
+docker compose up -d postgres
+docker compose exec postgres psql -U ai_roadmap -d ai_roadmap -c "CREATE EXTENSION IF NOT EXISTS vector;"
+docker compose exec postgres psql -U ai_roadmap -d ai_roadmap -c "SELECT extname FROM pg_extension WHERE extname = 'vector';"
+uv run alembic revision -m "create notes table"
+uv run ruff check migrations
+DATABASE_URL=postgresql+psycopg://ai_roadmap:ai_roadmap_dev_password@127.0.0.1:5432/ai_roadmap uv run alembic upgrade head
+DATABASE_URL=postgresql+psycopg://ai_roadmap:ai_roadmap_dev_password@127.0.0.1:5432/ai_roadmap uv run alembic current
+docker compose exec postgres psql -U ai_roadmap -d ai_roadmap -c "\d notes"
+docker compose exec postgres psql -U ai_roadmap -d ai_roadmap -c "SELECT extname FROM pg_extension WHERE extname IN ('pgcrypto', 'vector');"
+uv run pytest
+uv run ruff check .
+uv run mypy src
+```
+
+### Test Results
+
+- Backend `pytest`: 53 passed
+- Backend `ruff`: all checks passed
+- Backend `mypy`: no issues found in 9 source files
+- Alembic revision: `6ee40cc8e639 (head)`
+- PostgreSQL extensions: `pgcrypto` and `vector` verified
+- `notes.embedding`: verified as `vector(1024)`
+- Notes constraints: title, content, and embedding model non-blank checks verified
+
+### What I Learned
+
+- `vector(1024)` is part of the schema because the database must reject vectors with the wrong dimension.
+- A 768-dimensional embedding cannot be stored in a `vector(1024)` column and should also be rejected by application validation later.
+- Enabling `vector` in a migration makes the extension part of the reproducible schema history.
+- HNSW and IVFFlat are approximate nearest-neighbor indexes that trade recall and configuration complexity for speed.
+- Exact vector search is the right starting point until data volume and query latency justify an approximate index.
+- Changing the embedding model requires regenerating stored embeddings.
+
+### What Was Difficult
+
+- Distinguishing storing vectors from enforcing their dimensional contract.
+- Understanding why a wrong-dimension vector should not enter the database.
+- Understanding why approximate vector indexes are deferred until after correctness and measurement.
+- Handling the local PostgreSQL volume reset after switching to a pgvector-enabled image.
+
+### Tutor Review Summary
+
+- The local PostgreSQL service now uses a pgvector-enabled image.
+- The migration follows the existing Alembic chain after `db220f8d2751`.
+- The `notes` table uses `vector(1024)` and required text constraints.
+- The `vector` extension is enabled through migration, not only manually.
+- No premature approximate vector index was added.
+- Backend checks and schema verification pass.
+
+### Next Step
+
+- Start Lesson 6.3 and implement a typed Ollama embedding-client boundary with validation and mocked provider tests.

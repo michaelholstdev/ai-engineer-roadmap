@@ -26,7 +26,7 @@ DATABASE_URL=postgresql+psycopg://ai_roadmap:ai_roadmap_dev_password@127.0.0.1:5
 
 ## Local PostgreSQL
 
-The local PostgreSQL database can be started with Docker Compose.
+The local PostgreSQL database runs through Docker Compose with the `pgvector/pgvector:pg17` image. This image includes PostgreSQL 17 and the pgvector extension used for note embeddings.
 
 The local database URL is:
 
@@ -47,6 +47,8 @@ docker compose down
 ```
 
 ## Database migrations
+
+Migrations enable the required PostgreSQL extensions and tables, including `pgcrypto`, `vector`, `analysis_runs`, and `notes`. The `notes.embedding` column uses `vector(1024)` for `qwen3-embedding:0.6b`.
 
 Run migrations with:
 

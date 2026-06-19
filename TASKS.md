@@ -8,31 +8,9 @@ Phase 6 — Embeddings and Semantic Search
 
 ## Current Lesson
 
-Lesson 6.1 — Embedding and Vector Search Concepts
+Lesson 6.3 — Embedding Client Boundary
 
 ## Active Tasks
-
-### Lesson 6.1 — Embedding and Vector Search Concepts
-
-- [ ] Compare keyword matching with semantic similarity.
-- [ ] Define the notes, embeddings, and search-result boundaries.
-- [ ] Record `qwen3-embedding:0.6b` and 1024 vector dimensions.
-- [ ] Define document and query embedding formats.
-- [ ] Confirm that chunking remains in Phase 7.
-- [ ] Run existing backend and frontend checks.
-- [ ] Ask Codex for review.
-
-## Upcoming Tasks
-
-### Lesson 6.2 — pgvector Setup and Notes Schema
-
-- [ ] Use a PostgreSQL image that includes pgvector.
-- [ ] Enable the `vector` extension through Alembic.
-- [ ] Create the `notes` table with `vector(1024)`.
-- [ ] Add reversible migrations and schema constraints.
-- [ ] Apply and inspect the migration locally.
-- [ ] Document pgvector setup and migration commands.
-- [ ] Ask Codex for review.
 
 ### Lesson 6.3 — Embedding Client Boundary
 
@@ -42,6 +20,8 @@ Lesson 6.1 — Embedding and Vector Search Concepts
 - [ ] Add a stable retrieval instruction to query inputs.
 - [ ] Convert provider failures into application-specific errors.
 - [ ] Ask Codex for review.
+
+## Upcoming Tasks
 
 ### Lesson 6.4 — Store Notes with Embeddings
 
