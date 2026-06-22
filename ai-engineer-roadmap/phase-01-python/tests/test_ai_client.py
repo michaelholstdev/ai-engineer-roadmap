@@ -7,11 +7,17 @@ from ai_roadmap.ai_client import (
     AIProviderError,
     AI_PROVIDER_ENV,
     OPENAI_API_KEY_ENV,
+    EMBEDDING_DIMENSIONS,
+    EMBEDDING_MODEL,
+    OLLAMA_EMBED_URL,
     analyze_text_with_ai,
     analyze_text_with_ollama,
+    embed_note_text,
+    embed_search_query,
     get_openai_api_key,
     is_retryable_ai_error,
     parse_ollama_ai_response,
+    parse_ollama_embedding_response,
     run_with_ai_retry,
 )
 from ai_roadmap.schemas import AIAnalyzeResponse
@@ -144,9 +150,7 @@ def test_parse_ollama_ai_response_exception_on_invalid_response():
 
 
 def test_parse_ollama_ai_response_exception_on_invalid_json():
-    data = {
-        "response": "not json"
-    }
+    data = {"response": "not json"}
     with pytest.raises(AIProviderError):
         parse_ollama_ai_response(data)
 
@@ -160,9 +164,7 @@ def test_parse_ollama_ai_response_exception_on_invalid_sentiment():
 
 
 def test_parse_ollama_ai_response_raises_when_response_is_not_a_string():
-    data = {
-        "response": 123
-    }
+    data = {"response": 123}
     with pytest.raises(AIProviderError):
         parse_ollama_ai_response(data)
 
@@ -221,7 +223,9 @@ def test_analyze_text_with_ollama_exception_for_raised_response(monkeypatch):
             )
 
         def json(self) -> dict[str, object]:
-            raise AssertionError("json() should not be called when the response has an error status")
+            raise AssertionError(
+                "json() should not be called when the response has an error status"
+            )
 
     def fake_post(url: str, json: dict[str, object], timeout: float):
         assert url == "http://127.0.0.1:11434/api/generate"
@@ -236,3 +240,153 @@ def test_analyze_text_with_ollama_exception_for_raised_response(monkeypatch):
 
     with pytest.raises(AIProviderError):
         analyze_text_with_ollama("some text")
+
+
+def test_embedding_client_configuration_values():
+    assert EMBEDDING_MODEL == "qwen3-embedding:0.6b"
+    assert EMBEDDING_DIMENSIONS == 1024
+    assert OLLAMA_EMBED_URL == "http://127.0.0.1:11434/api/embed"
+
+
+def test_parse_ollama_embedding_response_returns_valid_embedding():
+    embedding = [0.1] * EMBEDDING_DIMENSIONS
+    data = {
+        "embeddings": [embedding],
+    }
+
+    result = parse_ollama_embedding_response(data)
+
+    assert result == embedding
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        {},
+        {"embeddings": "not a list"},
+        {"embeddings": []},
+        {"embeddings": ["not a vector"]},
+    ],
+)
+def test_parse_ollama_embedding_response_rejects_invalid_shape(data):
+    with pytest.raises(AIProviderError):
+        parse_ollama_embedding_response(data)
+
+
+def test_parse_ollama_embedding_response_rejects_wrong_dimension():
+    data = {
+        "embeddings": [[0.1, 0.2]],
+    }
+
+    with pytest.raises(AIProviderError):
+        parse_ollama_embedding_response(data)
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
+def test_parse_ollama_embedding_response_rejects_non_finite_values(value: float):
+    embedding = [0.1] * EMBEDDING_DIMENSIONS
+    embedding[0] = value
+
+    data = {
+        "embeddings": [embedding],
+    }
+
+    with pytest.raises(AIProviderError):
+        parse_ollama_embedding_response(data)
+
+
+def test_embed_note_text_calls_ollama_embed_api(monkeypatch):
+    embedding = [0.1] * EMBEDDING_DIMENSIONS
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {"embeddings": [embedding]}
+
+    def fake_post(url: str, json: dict[str, object], timeout: float):
+        assert url == OLLAMA_EMBED_URL
+        assert json["model"] == EMBEDDING_MODEL
+        assert "Postgres" in str(json["input"])
+        assert "stores data" in str(json["input"])
+        assert "Represent this query" not in str(json["input"])
+        assert timeout == 30.0
+        return FakeResponse()
+
+    monkeypatch.setattr("httpx.post", fake_post)
+
+    result = embed_note_text("Postgres", "stores data")
+
+    assert result == embedding
+
+
+def test_embed_note_text_raises_provider_error_on_request_error(monkeypatch):
+    def fake_post(url: str, json: dict[str, object], timeout: float):
+        raise httpx.RequestError("connection failed")
+
+    monkeypatch.setattr("httpx.post", fake_post)
+
+    with pytest.raises(AIProviderError):
+        embed_note_text("Postgres", "stores data")
+
+
+def test_embed_search_query_adds_retrieval_instruction(monkeypatch):
+    embedding = [0.1] * EMBEDDING_DIMENSIONS
+
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {"embeddings": [embedding]}
+
+    def fake_post(url: str, json: dict[str, object], timeout: float):
+        assert url == OLLAMA_EMBED_URL
+        assert json["model"] == EMBEDDING_MODEL
+        assert "Represent this query for retrieving relevant notes" in str(
+            json["input"]
+        )
+        assert "database search" in str(json["input"])
+        assert timeout == 30.0
+        return FakeResponse()
+
+    monkeypatch.setattr("httpx.post", fake_post)
+
+    result = embed_search_query("database search")
+
+    assert result == embedding
+
+
+def test_embed_note_text_raises_provider_error_for_invalid_embedding_response(
+    monkeypatch,
+):
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            pass
+
+        def json(self) -> dict[str, object]:
+            return {"embeddings": [[0.1, 0.2]]}
+
+    def fake_post(url: str, json: dict[str, object], timeout: float):
+        return FakeResponse()
+
+    monkeypatch.setattr("httpx.post", fake_post)
+
+    with pytest.raises(AIProviderError):
+        embed_note_text("Postgres", "stores data")
+
+
+def test_parse_ollama_embedding_response_rejects_boolean_values():
+    embedding = [0.1] * EMBEDDING_DIMENSIONS
+    embedding[0] = True
+
+    with pytest.raises(AIProviderError):
+        parse_ollama_embedding_response({"embeddings": [embedding]})
+
+
+def test_parse_ollama_embedding_response_rejects_multiple_embeddings():
+    embedding = [0.1] * EMBEDDING_DIMENSIONS
+
+    with pytest.raises(AIProviderError):
+        parse_ollama_embedding_response({"embeddings": [embedding, embedding]})

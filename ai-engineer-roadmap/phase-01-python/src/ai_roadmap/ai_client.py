@@ -1,6 +1,7 @@
 import json
+import math
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 
 import httpx
 from pydantic import ValidationError
@@ -10,6 +11,13 @@ from ai_roadmap.schemas import AIAnalyzeResponse
 
 OPENAI_API_KEY_ENV = "OPENAI_API_KEY"
 AI_PROVIDER_ENV = "AI_PROVIDER"
+
+EMBEDDING_MODEL = "qwen3-embedding:0.6b"
+EMBEDDING_DIMENSIONS = 1024
+OLLAMA_EMBED_URL = "http://127.0.0.1:11434/api/embed"
+EMBEDDING_TIMEOUT_SECONDS = 30.0
+
+RETRIEVAL_QUERY_INSTRUCTION = "Represent this query for retrieving relevant notes:"
 
 
 class AIClientConfigurationError(Exception):
@@ -90,3 +98,59 @@ def analyze_text_with_ollama(text: str) -> AIAnalyzeResponse:
         raise AIProviderError("AI provider request failed") from error
 
     return parse_ollama_ai_response(response.json())
+
+
+def parse_ollama_embedding_response(data: Mapping[str, object]) -> list[float]:
+    try:
+        embeddings = data["embeddings"]
+        if not isinstance(embeddings, list):
+            raise AIProviderError("Provider response was invalid")
+        if len(embeddings) != 1:
+            raise AIProviderError("Provider response was invalid")
+
+        embedding = embeddings[0]
+        if not isinstance(embedding, list):
+            raise AIProviderError("Provider response was invalid")
+
+        result: list[float] = []
+        for value in embedding:
+            if isinstance(value, bool) or not isinstance(value, int | float):
+                raise AIProviderError("Provider response was invalid")
+            if not math.isfinite(float(value)):
+                raise AIProviderError("Provider response was invalid")
+
+            result.append(float(value))
+
+        if len(result) != EMBEDDING_DIMENSIONS:
+            raise AIProviderError("Provider response was invalid")
+
+        return result
+    except (KeyError, IndexError) as error:
+        raise AIProviderError("Provider response was invalid") from error
+
+
+def embed_text(input_text: str) -> list[float]:
+    try:
+        response = httpx.post(
+            url=OLLAMA_EMBED_URL,
+            json={
+                "model": EMBEDDING_MODEL,
+                "input": input_text,
+            },
+            timeout=EMBEDDING_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+    except (httpx.RequestError, httpx.HTTPStatusError) as error:
+        raise AIProviderError("AI provider request failed") from error
+
+    return parse_ollama_embedding_response(response.json())
+
+
+def embed_note_text(title: str, content: str) -> list[float]:
+    input_text = f"Title: {title}\nContent: {content}"
+    return embed_text(input_text)
+
+
+def embed_search_query(query: str) -> list[float]:
+    input_text = f"{RETRIEVAL_QUERY_INSTRUCTION}\n{query}"
+    return embed_text(input_text)

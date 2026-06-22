@@ -8,20 +8,9 @@ Phase 6 — Embeddings and Semantic Search
 
 ## Current Lesson
 
-Lesson 6.3 — Embedding Client Boundary
+Lesson 6.4 — Store Notes with Embeddings
 
 ## Active Tasks
-
-### Lesson 6.3 — Embedding Client Boundary
-
-- [ ] Add tests for valid and invalid Ollama embedding responses.
-- [ ] Configure `qwen3-embedding:0.6b`, 1024 dimensions, endpoint, and timeout.
-- [ ] Implement separate document and query embedding operations.
-- [ ] Add a stable retrieval instruction to query inputs.
-- [ ] Convert provider failures into application-specific errors.
-- [ ] Ask Codex for review.
-
-## Upcoming Tasks
 
 ### Lesson 6.4 — Store Notes with Embeddings
 
@@ -31,6 +20,8 @@ Lesson 6.3 — Embedding Client Boundary
 - [ ] Ensure embedding failures do not persist notes.
 - [ ] Add and test `POST /notes`.
 - [ ] Ask Codex for review.
+
+## Upcoming Tasks
 
 ### Lesson 6.5 — Keyword Search
 

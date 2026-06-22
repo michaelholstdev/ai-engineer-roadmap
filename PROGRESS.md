@@ -2139,3 +2139,66 @@ uv run mypy src
 ### Next Step
 
 - Start Lesson 6.3 and implement a typed Ollama embedding-client boundary with validation and mocked provider tests.
+
+## 2026-06-22 — Lesson 6.3 — Embedding Client Boundary
+
+### Status
+
+Completed
+
+### What I Built
+
+- Added embedding-client configuration for `qwen3-embedding:0.6b`.
+- Fixed the embedding contract at 1024 dimensions.
+- Added the local Ollama `/api/embed` endpoint and timeout configuration.
+- Implemented parsing for Ollama embedding responses.
+- Validated that provider responses contain exactly one finite 1024-dimensional vector.
+- Rejected missing, malformed, wrong-sized, non-finite, boolean, and multi-embedding responses.
+- Added separate document and query embedding functions.
+- Added a stable retrieval instruction only for search-query embeddings.
+- Converted Ollama request and HTTP-status failures into `AIProviderError`.
+- Added tests that mock `httpx` and do not require Ollama to run.
+
+### Commands Run
+
+```bash
+uv run pytest tests/test_ai_client.py
+uv run pytest
+uv run ruff check .
+uv run mypy src
+```
+
+### Test Results
+
+- Backend `test_ai_client.py`: 35 passed
+- Backend `pytest`: 69 passed
+- Backend `ruff`: all checks passed
+- Backend `mypy`: no issues found in 9 source files
+
+### What I Learned
+
+- Ollama's embedding response is nested because one request can return embeddings for one or more input texts.
+- Embedding vectors must contain only finite numeric values because `NaN` and infinity cannot produce meaningful similarity scores.
+- Stored notes use plain document embeddings, while search queries use an instruction to shape them for retrieval.
+- Transport errors and HTTP-status errors belong behind the AI client boundary.
+- Routes should not call `httpx` directly because provider details, retries, validation, and error mapping should stay centralized.
+
+### What Was Difficult
+
+- Understanding why `dict[str, object]` is too strict for typed test dictionaries and why `Mapping[str, object]` works better.
+- Remembering that Python treats `bool` as a subclass of `int`.
+- Distinguishing wrong response shape from wrong vector dimension.
+- Keeping document embedding inputs and query embedding inputs intentionally different.
+
+### Tutor Review Summary
+
+- The embedding client boundary is isolated from routes and persistence.
+- The request shape matches the local Ollama embed API.
+- Provider responses are validated before a vector leaves the client boundary.
+- Query and document embedding functions are separated clearly.
+- Tests mock the provider boundary and keep automated checks deterministic.
+- Backend checks pass.
+
+### Next Step
+
+- Start Lesson 6.4 and persist notes with generated embeddings through a repository and service boundary.
