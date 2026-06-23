@@ -18,8 +18,11 @@ from ai_roadmap.schemas import (
     AnalyzeRequest,
     AnalyzeResponse,
     AnalysisHistoryResponse,
+    NoteCreateRequest,
+    NoteResponse,
 )
 from ai_roadmap.text_stats import count_characters, count_sentences, count_words
+from ai_roadmap.notes_service import create_note
 
 MAX_TEXT_LENGTH = 500
 
@@ -126,3 +129,30 @@ def list_analysis(
         )
         for run in runs
     ]
+
+
+@router.post("/notes")
+def create_note_route(
+    request: NoteCreateRequest,
+    connection: Connection = Depends(get_connection),
+) -> NoteResponse:
+    try:
+        note = create_note(connection, request.title, request.content)
+        return NoteResponse(
+            id=note.id,
+            title=note.title,
+            content=note.content,
+            embedding_model=note.embedding_model,
+            updated_at=note.updated_at,
+            created_at=note.created_at,
+        )
+    except AIClientConfigurationError:
+        raise HTTPException(
+            status_code=503,
+            detail="AI client is not configured",
+        )
+    except AIProviderError:
+        raise HTTPException(
+            status_code=502,
+            detail="AI provider request failed",
+        )

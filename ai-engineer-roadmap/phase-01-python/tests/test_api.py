@@ -6,11 +6,16 @@ from sqlalchemy.engine import Connection
 from uuid import UUID
 from datetime import datetime, timezone
 
-from ai_roadmap.ai_client import AIClientConfigurationError, AIProviderError
+from ai_roadmap.ai_client import (
+    AIClientConfigurationError,
+    AIProviderError,
+    EMBEDDING_MODEL,
+)
 from ai_roadmap.api import app
 from ai_roadmap.database import get_connection
 from ai_roadmap.schemas import AIAnalyzeResponse
 from ai_roadmap.analysis_repository import AnalysisRun
+from ai_roadmap.notes_repository import Note
 
 client = TestClient(app)
 
@@ -333,3 +338,123 @@ def test_list_analyses_rejects_invalid_limit(limit: int, monkeypatch):
 
     assert response.status_code == 422
     list_runs.assert_not_called()
+
+
+def test_create_note_returns_stored_note(monkeypatch):
+    note_id = UUID("12345678-1234-5678-1234-567812345678")
+    created_at = datetime(2026, 6, 23, 12, 0, tzinfo=timezone.utc)
+    updated_at = datetime(2026, 6, 23, 12, 0, tzinfo=timezone.utc)
+
+    def fake_create_note(connection, title: str, content: str) -> Note:
+        assert title == "Postgres"
+        assert content == "Postgres stores data."
+        return Note(
+            id=note_id,
+            title=title,
+            content=content,
+            embedding_model=EMBEDDING_MODEL,
+            created_at=created_at,
+            updated_at=updated_at,
+        )
+
+    monkeypatch.setattr(
+        "ai_roadmap.routes.create_note",
+        fake_create_note,
+    )
+
+    response = client.post(
+        "/notes",
+        json={
+            "title": "Postgres",
+            "content": "Postgres stores data.",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": str(note_id),
+        "title": "Postgres",
+        "content": "Postgres stores data.",
+        "embedding_model": EMBEDDING_MODEL,
+        "created_at": "2026-06-23T12:00:00Z",
+        "updated_at": "2026-06-23T12:00:00Z",
+    }
+    assert "embedding" not in response.json()
+
+
+def test_create_note_returns_502_when_embedding_provider_fails(
+    monkeypatch, override_database_connection
+):
+    def fake_create_note(connection, title: str, content: str) -> Note:
+        raise AIProviderError("AI provider request failed")
+
+    monkeypatch.setattr(
+        "ai_roadmap.routes.create_note",
+        fake_create_note,
+    )
+
+    response = client.post(
+        "/notes",
+        json={
+            "title": "Postgres",
+            "content": "Postgres stores data.",
+        },
+    )
+
+    assert response.status_code == 502
+    assert response.json() == {
+        "detail": "AI provider request failed",
+    }
+    override_database_connection.execute.assert_not_called()
+
+
+def test_create_note_returns_503_when_ai_client_is_not_configured(
+    monkeypatch, override_database_connection
+):
+    def fake_create_note(connection, title: str, content: str) -> Note:
+        raise AIClientConfigurationError("AI provider is not configured")
+
+    monkeypatch.setattr(
+        "ai_roadmap.routes.create_note",
+        fake_create_note,
+    )
+
+    response = client.post(
+        "/notes",
+        json={
+            "title": "Postgres",
+            "content": "Postgres stores data.",
+        },
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "detail": "AI client is not configured",
+    }
+    override_database_connection.execute.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"title": "", "content": "Postgres stores data."},
+        {"title": "   ", "content": "Postgres stores data."},
+        {"title": "Postgres", "content": ""},
+        {"title": "Postgres", "content": "   "},
+    ],
+)
+def test_create_note_rejects_blank_fields(
+    monkeypatch, payload, override_database_connection
+):
+    create_note_mock = Mock()
+
+    monkeypatch.setattr(
+        "ai_roadmap.routes.create_note",
+        create_note_mock,
+    )
+
+    response = client.post("/notes", json=payload)
+
+    assert response.status_code == 422
+    create_note_mock.assert_not_called()
+    override_database_connection.execute.assert_not_called()

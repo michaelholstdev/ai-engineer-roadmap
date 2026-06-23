@@ -8,20 +8,9 @@ Phase 6 — Embeddings and Semantic Search
 
 ## Current Lesson
 
-Lesson 6.4 — Store Notes with Embeddings
+Lesson 6.5 — Keyword Search
 
 ## Active Tasks
-
-### Lesson 6.4 — Store Notes with Embeddings
-
-- [ ] Define typed note-create and note-response models.
-- [ ] Add repository tests for inserting notes and vectors.
-- [ ] Create a service coordinating embedding and persistence.
-- [ ] Ensure embedding failures do not persist notes.
-- [ ] Add and test `POST /notes`.
-- [ ] Ask Codex for review.
-
-## Upcoming Tasks
 
 ### Lesson 6.5 — Keyword Search
 
@@ -31,6 +20,8 @@ Lesson 6.4 — Store Notes with Embeddings
 - [ ] Add `mode=keyword` service and API behavior.
 - [ ] Validate search query and limit parameters.
 - [ ] Ask Codex for review.
+
+## Upcoming Tasks
 
 ### Lesson 6.6 — Semantic Search
 

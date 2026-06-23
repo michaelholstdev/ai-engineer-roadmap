@@ -2202,3 +2202,67 @@ uv run mypy src
 ### Next Step
 
 - Start Lesson 6.4 and persist notes with generated embeddings through a repository and service boundary.
+
+## 2026-06-23 — Lesson 6.4 — Store Notes with Embeddings
+
+### Status
+
+Completed
+
+### What I Built
+
+- Added typed note domain objects for creating and returning stored notes.
+- Added `NoteCreateRequest` with non-blank `title` and `content` validation.
+- Added `NoteResponse` without exposing raw embeddings.
+- Implemented a notes repository that inserts notes with embeddings and returns stored note metadata.
+- Converted Python embedding lists into pgvector-compatible string values at the database boundary.
+- Implemented a notes service that coordinates document embedding generation and persistence.
+- Ensured embedding failures prevent note inserts.
+- Added `POST /notes` with safe provider and configuration error mapping.
+- Added repository, service, schema, and API tests for note creation.
+
+### Commands Run
+
+```bash
+uv run pytest
+uv run ruff check .
+uv run mypy src
+git diff --check
+```
+
+### Test Results
+
+- Backend `pytest`: 88 passed
+- Backend `ruff`: all checks passed
+- Backend `mypy`: no issues found in 11 source files
+- `git diff --check`: no whitespace issues
+
+### What I Learned
+
+- The service layer coordinates embedding generation and persistence.
+- The repository layer should only know how to store and return data.
+- Raw embeddings are internal retrieval data and should not be returned to API clients.
+- Partial note creation is prevented by generating the embedding before calling the repository insert.
+- Deterministic title/content formatting matters because embeddings depend on the exact input text.
+- Provider and configuration failures before persistence must not create database records.
+
+### What Was Difficult
+
+- Distinguishing service orchestration from repository persistence.
+- Understanding why `RETURNING` is needed to get generated `id`, `created_at`, and `updated_at` values.
+- Mocking chained database result calls in repository tests.
+- Ensuring tests actually prove that `save_note` is not called when embedding generation fails.
+- Keeping API responses useful without leaking raw vectors.
+
+### Tutor Review Summary
+
+- Note creation now has clear request, service, repository, and response boundaries.
+- The route contains no raw SQL and no Ollama response parsing.
+- The service builds one document embedding before persistence.
+- Provider and configuration errors are mapped to safe HTTP responses.
+- Validation prevents blank note fields before the service runs.
+- Backend checks pass.
+
+### Next Step
+
+- Start Lesson 6.5 and add keyword search over stored notes.
