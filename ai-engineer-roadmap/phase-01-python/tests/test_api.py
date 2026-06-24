@@ -15,7 +15,7 @@ from ai_roadmap.api import app
 from ai_roadmap.database import get_connection
 from ai_roadmap.schemas import AIAnalyzeResponse
 from ai_roadmap.analysis_repository import AnalysisRun
-from ai_roadmap.notes_repository import Note
+from ai_roadmap.notes_repository import Note, SearchResult
 
 client = TestClient(app)
 
@@ -458,3 +458,71 @@ def test_create_note_rejects_blank_fields(
     assert response.status_code == 422
     create_note_mock.assert_not_called()
     override_database_connection.execute.assert_not_called()
+
+
+def test_search_notes_returns_keyword_results(monkeypatch):
+    note_id = UUID("12345678-1234-5678-1234-567812345678")
+    created_at = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+    updated_at = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+
+    def fake_search_notes(connection, query: str, mode: str, limit: int):
+        assert query == "relational data"
+        assert mode == "keyword"
+        assert limit == 10
+        return [
+            SearchResult(
+                id=note_id,
+                title="Postgres",
+                content="Postgres stores relational data.",
+                embedding_model=EMBEDDING_MODEL,
+                created_at=created_at,
+                updated_at=updated_at,
+                score=0.75,
+                search_mode="keyword",
+            )
+        ]
+
+    monkeypatch.setattr(
+        "ai_roadmap.routes.search_notes",
+        fake_search_notes,
+    )
+
+    response = client.get("/notes/search?query=relational%20data&mode=keyword&limit=10")
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": str(note_id),
+            "title": "Postgres",
+            "content": "Postgres stores relational data.",
+            "embedding_model": EMBEDDING_MODEL,
+            "created_at": "2026-06-24T12:00:00Z",
+            "updated_at": "2026-06-24T12:00:00Z",
+            "score": 0.75,
+            "search_mode": "keyword",
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "/notes/search?query=&mode=keyword&limit=10",
+        "/notes/search?query=%20%20%20&mode=keyword&limit=10",
+        "/notes/search?query=postgres&mode=keyword&limit=0",
+        "/notes/search?query=postgres&mode=keyword&limit=101",
+        "/notes/search?query=postgres&mode=semantic&limit=10",
+    ],
+)
+def test_search_notes_rejects_invalid_parameters(monkeypatch, url):
+    search_notes_mock = Mock()
+
+    monkeypatch.setattr(
+        "ai_roadmap.routes.search_notes",
+        search_notes_mock,
+    )
+
+    response = client.get(url)
+
+    assert response.status_code == 422
+    search_notes_mock.assert_not_called()

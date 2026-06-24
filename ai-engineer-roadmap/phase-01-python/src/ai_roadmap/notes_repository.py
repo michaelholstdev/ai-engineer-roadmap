@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 import sqlalchemy as sa
 from sqlalchemy.engine import Connection
+from sqlalchemy.sql.elements import ColumnElement
 
 
 @dataclass(frozen=True)
@@ -22,6 +24,18 @@ class Note:
     embedding_model: str
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass(frozen=True)
+class SearchResult:
+    id: UUID
+    title: str
+    content: str
+    embedding_model: str
+    created_at: datetime
+    updated_at: datetime
+    score: float
+    search_mode: Literal["keyword", "semantic"]
 
 
 metadata = sa.MetaData()
@@ -87,3 +101,52 @@ def save_note(connection: Connection, note: NoteCreate) -> Note:
         created_at=row["created_at"],
         updated_at=row["updated_at"],
     )
+
+
+def search_notes_by_keyword(
+    connection: Connection,
+    query: str,
+    limit: int = 20,
+) -> list[SearchResult]:
+    english_config: ColumnElement[str] = sa.literal_column("'english'")
+    search_vector = sa.func.to_tsvector(
+        english_config,
+        notes.c.title + sa.literal(" ") + notes.c.content,
+    )
+    search_query = sa.func.websearch_to_tsquery(english_config, query)
+    score = sa.func.ts_rank(search_vector, search_query).label("score")
+
+    statement = (
+        sa.select(
+            notes.c.id,
+            notes.c.title,
+            notes.c.content,
+            notes.c.embedding_model,
+            notes.c.created_at,
+            notes.c.updated_at,
+            score,
+        )
+        .where(search_vector.op("@@")(search_query))
+        .order_by(
+            sa.desc(sa.column("score")),
+            notes.c.created_at.desc(),
+            notes.c.id.desc(),
+        )
+        .limit(limit)
+    )
+
+    rows = connection.execute(statement).mappings().all()
+
+    return [
+        SearchResult(
+            id=row["id"],
+            title=row["title"],
+            content=row["content"],
+            embedding_model=row["embedding_model"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+            score=row["score"],
+            search_mode="keyword",
+        )
+        for row in rows
+    ]

@@ -4,7 +4,12 @@ from uuid import UUID
 import pytest
 from pydantic import ValidationError
 
-from ai_roadmap.schemas import AIAnalyzeResponse, NoteCreateRequest, NoteResponse
+from ai_roadmap.schemas import (
+    AIAnalyzeResponse,
+    NoteCreateRequest,
+    NoteResponse,
+    SearchResultResponse,
+)
 
 
 def test_ai_analyze_response_accepts_valid_data():
@@ -84,3 +89,29 @@ def test_note_response_accepts_stored_note_data_without_embedding():
     assert response.embedding_model == "qwen3-embedding:0.6b"
     assert response.created_at == created_at
     assert response.updated_at == updated_at
+
+
+def test_search_result_response_accepts_keyword_result_without_embedding():
+    note_id = UUID("12345678-1234-5678-1234-567812345678")
+    created_at = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+    updated_at = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+
+    response = SearchResultResponse(
+        id=note_id,
+        title="Postgres",
+        content="Postgres stores relational data.",
+        embedding_model="qwen3-embedding:0.6b",
+        created_at=created_at,
+        updated_at=updated_at,
+        score=0.75,
+        search_mode="keyword",
+    )
+
+    assert response.id == note_id
+    assert response.title == "Postgres"
+    assert response.content == "Postgres stores relational data."
+    assert response.embedding_model == "qwen3-embedding:0.6b"
+    assert response.created_at == created_at
+    assert response.updated_at == updated_at
+    assert response.score == 0.75
+    assert response.search_mode == "keyword"

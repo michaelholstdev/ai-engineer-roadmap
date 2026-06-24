@@ -8,20 +8,9 @@ Phase 6 — Embeddings and Semantic Search
 
 ## Current Lesson
 
-Lesson 6.5 — Keyword Search
+Lesson 6.6 — Semantic Search
 
 ## Active Tasks
-
-### Lesson 6.5 — Keyword Search
-
-- [ ] Define the shared search-result domain model.
-- [ ] Add PostgreSQL full-text-search repository tests.
-- [ ] Implement ranked and deterministic keyword search.
-- [ ] Add `mode=keyword` service and API behavior.
-- [ ] Validate search query and limit parameters.
-- [ ] Ask Codex for review.
-
-## Upcoming Tasks
 
 ### Lesson 6.6 — Semantic Search
 
@@ -31,6 +20,8 @@ Lesson 6.5 — Keyword Search
 - [ ] Add `mode=semantic` API behavior and provider-error mapping.
 - [ ] Return the shared search-result response.
 - [ ] Ask Codex for review.
+
+## Upcoming Tasks
 
 ### Lesson 6.7 — Notes and Search UI
 

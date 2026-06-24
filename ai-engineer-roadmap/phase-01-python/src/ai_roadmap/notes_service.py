@@ -1,7 +1,15 @@
+from typing import Literal
+
 from sqlalchemy.engine import Connection
 
 from ai_roadmap.ai_client import EMBEDDING_MODEL, embed_note_text
-from ai_roadmap.notes_repository import Note, NoteCreate, save_note
+from ai_roadmap.notes_repository import (
+    Note,
+    NoteCreate,
+    SearchResult,
+    save_note,
+    search_notes_by_keyword,
+)
 
 
 def create_note(connection: Connection, title: str, content: str) -> Note:
@@ -15,3 +23,12 @@ def create_note(connection: Connection, title: str, content: str) -> Note:
     )
 
     return save_note(connection, note)
+
+
+def search_notes(
+    connection: Connection,
+    query: str,
+    mode: Literal["keyword"] = "keyword",
+    limit: int = 20,
+) -> list[SearchResult]:
+    return search_notes_by_keyword(connection, query, limit)

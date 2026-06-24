@@ -63,3 +63,14 @@ class NoteResponse(BaseModel):
     embedding_model: str
     created_at: datetime
     updated_at: datetime
+
+
+class SearchResultResponse(BaseModel):
+    id: UUID
+    title: str
+    content: str
+    embedding_model: str
+    created_at: datetime
+    updated_at: datetime
+    score: float
+    search_mode: Literal["keyword", "semantic"]

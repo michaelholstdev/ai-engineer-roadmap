@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.engine import Connection
 
@@ -20,9 +22,10 @@ from ai_roadmap.schemas import (
     AnalysisHistoryResponse,
     NoteCreateRequest,
     NoteResponse,
+    SearchResultResponse,
 )
 from ai_roadmap.text_stats import count_characters, count_sentences, count_words
-from ai_roadmap.notes_service import create_note
+from ai_roadmap.notes_service import create_note, search_notes
 
 MAX_TEXT_LENGTH = 500
 
@@ -156,3 +159,32 @@ def create_note_route(
             status_code=502,
             detail="AI provider request failed",
         )
+
+
+@router.get("/notes/search")
+def search_notes_route(
+    connection: Connection = Depends(get_connection),
+    query: str = Query(min_length=1, pattern=r"\S"),
+    mode: Literal["keyword"] = "keyword",
+    limit: int = Query(default=20, ge=1, le=100),
+) -> list[SearchResultResponse]:
+    results = search_notes(
+        connection=connection,
+        query=query,
+        mode=mode,
+        limit=limit,
+    )
+
+    return [
+        SearchResultResponse(
+            id=result.id,
+            title=result.title,
+            content=result.content,
+            embedding_model=result.embedding_model,
+            created_at=result.created_at,
+            updated_at=result.updated_at,
+            score=result.score,
+            search_mode=result.search_mode,
+        )
+        for result in results
+    ]

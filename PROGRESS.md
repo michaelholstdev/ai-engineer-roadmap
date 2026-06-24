@@ -2266,3 +2266,64 @@ git diff --check
 ### Next Step
 
 - Start Lesson 6.5 and add keyword search over stored notes.
+
+## 2026-06-24 — Lesson 6.5 — Keyword Search
+
+### Status
+
+Completed
+
+### What I Built
+
+- Added a shared `SearchResult` domain model for keyword and future semantic search.
+- Added `SearchResultResponse` without exposing raw embeddings.
+- Implemented PostgreSQL full-text keyword search across note titles and content.
+- Used `to_tsvector`, `websearch_to_tsquery`, the `@@` match operator, and `ts_rank`.
+- Added deterministic ordering by score, `created_at`, and `id`.
+- Added bounded `limit` handling for keyword search.
+- Added `search_notes` in the service layer for `mode=keyword`.
+- Added `GET /notes/search` with query, mode, and limit validation.
+- Verified keyword mode does not call the embedding provider.
+
+### Commands Run
+
+```bash
+uv run pytest
+uv run ruff check .
+uv run mypy src
+```
+
+### Test Results
+
+- Backend `pytest`: 100 passed
+- Backend `ruff`: all checks passed
+- Backend `mypy`: no issues found in 11 source files
+
+### What I Learned
+
+- PostgreSQL full-text search tokenizes and normalizes text, while `LIKE` only performs substring matching.
+- The `@@` operator checks whether a `tsvector` matches a `tsquery`.
+- `ts_rank` provides a relevance score for matched results.
+- Secondary ordering is needed because equal scores should still produce stable API results.
+- Keyword mode must avoid the embedding provider so it remains a fast, deterministic lexical baseline.
+- Keyword search can miss relevant notes that use different words, synonyms, or misspelled terms.
+
+### What Was Difficult
+
+- Understanding the relationship between `to_tsvector`, `websearch_to_tsquery`, `@@`, and `ts_rank`.
+- Handling SQLAlchemy's PostgreSQL `REGCONFIG` literal for the `english` search configuration.
+- Testing SQL behavior without relying too much on brittle full SQL-string matching.
+- Keeping keyword search separate from the embedding client before semantic search is added.
+
+### Tutor Review Summary
+
+- Keyword search is implemented at the repository boundary with PostgreSQL full-text search.
+- Results use the shared search-result shape and do not expose embeddings.
+- The API validates query text, search mode, and result limits.
+- Ordering is ranked and deterministic.
+- Keyword mode is isolated from embedding-provider calls.
+- Backend checks pass.
+
+### Next Step
+
+- Start Lesson 6.6 and add semantic search with query embeddings and pgvector ordering.

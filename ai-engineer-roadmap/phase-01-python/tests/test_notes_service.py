@@ -6,8 +6,8 @@ import pytest
 from sqlalchemy.engine import Connection
 
 from ai_roadmap.ai_client import AIProviderError, EMBEDDING_DIMENSIONS, EMBEDDING_MODEL
-from ai_roadmap.notes_repository import Note
-from ai_roadmap.notes_service import create_note, save_note
+from ai_roadmap.notes_repository import Note, SearchResult
+from ai_roadmap.notes_service import create_note, save_note, search_notes
 
 
 def test_create_note_embeds_and_stores_note(monkeypatch):
@@ -79,3 +79,73 @@ def test_create_note_does_not_save_when_embedding_fails(monkeypatch):
         )
 
     save_note_mock.assert_not_called()
+
+
+def test_search_notes_uses_keyword_repository(monkeypatch):
+    note_id = UUID("12345678-1234-5678-1234-567812345678")
+    created_at = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+    updated_at = datetime(2026, 6, 24, 12, 0, tzinfo=timezone.utc)
+
+    expected_results = [
+        SearchResult(
+            id=note_id,
+            title="Postgres",
+            content="Postgres stores relational data.",
+            embedding_model=EMBEDDING_MODEL,
+            created_at=created_at,
+            updated_at=updated_at,
+            score=0.75,
+            search_mode="keyword",
+        )
+    ]
+
+    def fake_search_notes_by_keyword(connection, query: str, limit: int):
+        assert query == "relational data"
+        assert limit == 10
+        return expected_results
+
+    monkeypatch.setattr(
+        "ai_roadmap.notes_service.search_notes_by_keyword",
+        fake_search_notes_by_keyword,
+    )
+
+    connection = Mock(spec=Connection)
+
+    result = search_notes(
+        connection=connection,
+        query="relational data",
+        mode="keyword",
+        limit=10,
+    )
+
+    assert result == expected_results
+
+
+def test_search_notes_keyword_mode_does_not_call_embedding_provider(monkeypatch):
+    search_results: list[SearchResult] = []
+
+    def fake_search_notes_by_keyword(connection, query: str, limit: int):
+        return search_results
+
+    embed_search_query_mock = Mock()
+
+    monkeypatch.setattr(
+        "ai_roadmap.notes_service.search_notes_by_keyword",
+        fake_search_notes_by_keyword,
+    )
+    monkeypatch.setattr(
+        "ai_roadmap.ai_client.embed_search_query",
+        embed_search_query_mock,
+    )
+
+    connection = Mock(spec=Connection)
+
+    result = search_notes(
+        connection=connection,
+        query="relational data",
+        mode="keyword",
+        limit=10,
+    )
+
+    assert result == []
+    embed_search_query_mock.assert_not_called()
