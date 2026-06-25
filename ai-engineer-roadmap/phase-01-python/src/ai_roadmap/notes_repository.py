@@ -6,6 +6,7 @@ from uuid import UUID
 import sqlalchemy as sa
 from sqlalchemy.engine import Connection
 from sqlalchemy.sql.elements import ColumnElement
+from ai_roadmap.ai_client import EMBEDDING_MODEL
 
 
 @dataclass(frozen=True)
@@ -147,6 +148,51 @@ def search_notes_by_keyword(
             updated_at=row["updated_at"],
             score=row["score"],
             search_mode="keyword",
+        )
+        for row in rows
+    ]
+
+
+def search_notes_by_semantic(
+    connection: Connection,
+    query_embedding: list[float],
+    limit: int = 20,
+) -> list[SearchResult]:
+    query_vector = format_embedding_for_pgvector(query_embedding)
+    distance = notes.c.embedding.op("<=>")(query_vector).label("distance")
+    score = (sa.literal(1.0) - distance).label("score")
+
+    statement = (
+        sa.select(
+            notes.c.id,
+            notes.c.title,
+            notes.c.content,
+            notes.c.embedding_model,
+            notes.c.created_at,
+            notes.c.updated_at,
+            score,
+        )
+        .where(notes.c.embedding_model == EMBEDDING_MODEL)
+        .order_by(
+            sa.asc(sa.column("distance")),
+            notes.c.created_at.desc(),
+            notes.c.id.desc(),
+        )
+        .limit(limit)
+    )
+
+    rows = connection.execute(statement).mappings().all()
+
+    return [
+        SearchResult(
+            id=row["id"],
+            title=row["title"],
+            content=row["content"],
+            embedding_model=row["embedding_model"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+            score=row["score"],
+            search_mode="semantic",
         )
         for row in rows
     ]

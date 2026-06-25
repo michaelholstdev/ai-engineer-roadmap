@@ -511,7 +511,6 @@ def test_search_notes_returns_keyword_results(monkeypatch):
         "/notes/search?query=%20%20%20&mode=keyword&limit=10",
         "/notes/search?query=postgres&mode=keyword&limit=0",
         "/notes/search?query=postgres&mode=keyword&limit=101",
-        "/notes/search?query=postgres&mode=semantic&limit=10",
     ],
 )
 def test_search_notes_rejects_invalid_parameters(monkeypatch, url):
@@ -526,3 +525,97 @@ def test_search_notes_rejects_invalid_parameters(monkeypatch, url):
 
     assert response.status_code == 422
     search_notes_mock.assert_not_called()
+
+
+def test_search_notes_returns_semantic_results(monkeypatch):
+    note_id = UUID("12345678-1234-5678-1234-567812345678")
+    created_at = datetime(2026, 6, 25, 12, 0, tzinfo=timezone.utc)
+    updated_at = datetime(2026, 6, 25, 12, 0, tzinfo=timezone.utc)
+
+    def fake_search_notes(connection, query: str, mode: str, limit: int):
+        assert query == "database reliability"
+        assert mode == "semantic"
+        assert limit == 10
+        return [
+            SearchResult(
+                id=note_id,
+                title="Postgres",
+                content="Postgres supports reliable storage.",
+                embedding_model=EMBEDDING_MODEL,
+                created_at=created_at,
+                updated_at=updated_at,
+                score=0.91,
+                search_mode="semantic",
+            )
+        ]
+
+    monkeypatch.setattr(
+        "ai_roadmap.routes.search_notes",
+        fake_search_notes,
+    )
+
+    response = client.get(
+        "/notes/search?query=database%20reliability&mode=semantic&limit=10"
+    )
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "id": str(note_id),
+            "title": "Postgres",
+            "content": "Postgres supports reliable storage.",
+            "embedding_model": EMBEDDING_MODEL,
+            "created_at": "2026-06-25T12:00:00Z",
+            "updated_at": "2026-06-25T12:00:00Z",
+            "score": 0.91,
+            "search_mode": "semantic",
+        }
+    ]
+
+
+def test_search_notes_returns_502_when_semantic_embedding_provider_fails(
+    monkeypatch,
+    override_database_connection,
+):
+    def fake_search_notes(connection, query: str, mode: str, limit: int):
+        assert mode == "semantic"
+        raise AIProviderError("AI provider request failed")
+
+    monkeypatch.setattr(
+        "ai_roadmap.routes.search_notes",
+        fake_search_notes,
+    )
+
+    response = client.get(
+        "/notes/search?query=database%20reliability&mode=semantic&limit=10"
+    )
+
+    assert response.status_code == 502
+    assert response.json() == {
+        "detail": "AI provider request failed",
+    }
+    override_database_connection.execute.assert_not_called()
+
+
+def test_search_notes_returns_503_when_ai_client_is_not_configured(
+    monkeypatch,
+    override_database_connection,
+):
+    def fake_search_notes(connection, query: str, mode: str, limit: int):
+        assert mode == "semantic"
+        raise AIClientConfigurationError("AI client is not configured")
+
+    monkeypatch.setattr(
+        "ai_roadmap.routes.search_notes",
+        fake_search_notes,
+    )
+
+    response = client.get(
+        "/notes/search?query=database%20reliability&mode=semantic&limit=10"
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "detail": "AI client is not configured",
+    }
+    override_database_connection.execute.assert_not_called()

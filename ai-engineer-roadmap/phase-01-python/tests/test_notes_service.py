@@ -149,3 +149,110 @@ def test_search_notes_keyword_mode_does_not_call_embedding_provider(monkeypatch)
 
     assert result == []
     embed_search_query_mock.assert_not_called()
+
+
+def test_search_notes_semantic_mode_embeds_query_and_searches_by_vector(monkeypatch):
+    note_id = UUID("12345678-1234-5678-1234-567812345678")
+    created_at = datetime(2026, 6, 25, 12, 0, tzinfo=timezone.utc)
+    updated_at = datetime(2026, 6, 25, 12, 0, tzinfo=timezone.utc)
+    query_embedding = [0.1] * EMBEDDING_DIMENSIONS
+
+    expected_results = [
+        SearchResult(
+            id=note_id,
+            title="Postgres",
+            content="Postgres supports reliable storage.",
+            embedding_model=EMBEDDING_MODEL,
+            created_at=created_at,
+            updated_at=updated_at,
+            score=0.91,
+            search_mode="semantic",
+        )
+    ]
+
+    def fake_embed_search_query(query: str) -> list[float]:
+        assert query == "database reliability"
+        return query_embedding
+
+    def fake_search_notes_by_semantic(connection, query_embedding_arg, limit: int):
+        assert query_embedding_arg == query_embedding
+        assert limit == 10
+        return expected_results
+
+    monkeypatch.setattr(
+        "ai_roadmap.notes_service.embed_search_query",
+        fake_embed_search_query,
+    )
+    monkeypatch.setattr(
+        "ai_roadmap.notes_service.search_notes_by_semantic",
+        fake_search_notes_by_semantic,
+    )
+
+    connection = Mock(spec=Connection)
+
+    result = search_notes(
+        connection=connection,
+        query="database reliability",
+        mode="semantic",
+        limit=10,
+    )
+
+    assert result == expected_results
+
+
+def test_search_notes_semantic_mode_does_not_search_when_embedding_fails(monkeypatch):
+    def fake_embed_search_query(query: str) -> list[float]:
+        raise AIProviderError("Provider call failed")
+
+    search_notes_by_semantic_mock = Mock()
+
+    monkeypatch.setattr(
+        "ai_roadmap.notes_service.embed_search_query",
+        fake_embed_search_query,
+    )
+    monkeypatch.setattr(
+        "ai_roadmap.notes_service.search_notes_by_semantic",
+        search_notes_by_semantic_mock,
+    )
+
+    connection = Mock(spec=Connection)
+
+    with pytest.raises(AIProviderError):
+        search_notes(
+            connection=connection,
+            query="database reliability",
+            mode="semantic",
+            limit=10,
+        )
+
+    search_notes_by_semantic_mock.assert_not_called()
+
+
+def test_search_notes_semantic_mode_rejects_wrong_dimension_without_search(monkeypatch):
+    wrong_dimension_embedding = [0.1, 0.2]
+
+    def fake_embed_search_query(query: str) -> list[float]:
+        return wrong_dimension_embedding
+
+    search_notes_by_semantic_mock = Mock()
+
+    monkeypatch.setattr(
+        "ai_roadmap.notes_service.embed_search_query",
+        fake_embed_search_query,
+    )
+    monkeypatch.setattr(
+        "ai_roadmap.notes_service.search_notes_by_semantic",
+        search_notes_by_semantic_mock,
+    )
+
+    connection = Mock(spec=Connection)
+
+    with pytest.raises(AIProviderError):
+        search_notes(
+            connection=connection,
+            query="database reliability",
+            mode="semantic",
+            limit=10,
+        )
+
+    search_notes_by_semantic_mock.assert_not_called()

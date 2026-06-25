@@ -8,20 +8,9 @@ Phase 6 — Embeddings and Semantic Search
 
 ## Current Lesson
 
-Lesson 6.6 — Semantic Search
+Lesson 6.7 — Notes and Search UI
 
 ## Active Tasks
-
-### Lesson 6.6 — Semantic Search
-
-- [ ] Add repository tests for cosine-distance ordering.
-- [ ] Implement exact pgvector semantic search.
-- [ ] Generate one instructed query embedding per search.
-- [ ] Add `mode=semantic` API behavior and provider-error mapping.
-- [ ] Return the shared search-result response.
-- [ ] Ask Codex for review.
-
-## Upcoming Tasks
 
 ### Lesson 6.7 — Notes and Search UI
 
@@ -31,6 +20,8 @@ Lesson 6.6 — Semantic Search
 - [ ] Render both modes with one result component.
 - [ ] Test loading, empty, success, validation, and error states.
 - [ ] Ask Codex for review.
+
+## Upcoming Tasks
 
 ### Lesson 6.8 — Full-Stack Search Comparison
 

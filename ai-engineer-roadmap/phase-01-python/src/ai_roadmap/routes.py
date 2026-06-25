@@ -165,26 +165,30 @@ def create_note_route(
 def search_notes_route(
     connection: Connection = Depends(get_connection),
     query: str = Query(min_length=1, pattern=r"\S"),
-    mode: Literal["keyword"] = "keyword",
+    mode: Literal["keyword", "semantic"] = "keyword",
     limit: int = Query(default=20, ge=1, le=100),
 ) -> list[SearchResultResponse]:
-    results = search_notes(
-        connection=connection,
-        query=query,
-        mode=mode,
-        limit=limit,
-    )
-
-    return [
-        SearchResultResponse(
-            id=result.id,
-            title=result.title,
-            content=result.content,
-            embedding_model=result.embedding_model,
-            created_at=result.created_at,
-            updated_at=result.updated_at,
-            score=result.score,
-            search_mode=result.search_mode,
+    try:
+        results = search_notes(
+            connection=connection,
+            query=query,
+            mode=mode,
+            limit=limit,
         )
-        for result in results
-    ]
+        return [
+            SearchResultResponse(
+                id=result.id,
+                title=result.title,
+                content=result.content,
+                embedding_model=result.embedding_model,
+                created_at=result.created_at,
+                updated_at=result.updated_at,
+                score=result.score,
+                search_mode=result.search_mode,
+            )
+            for result in results
+        ]
+    except AIClientConfigurationError:
+        raise HTTPException(status_code=503, detail="AI client is not configured")
+    except AIProviderError:
+        raise HTTPException(status_code=502, detail="AI provider request failed")

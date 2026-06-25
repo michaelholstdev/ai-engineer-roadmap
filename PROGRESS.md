@@ -2327,3 +2327,67 @@ uv run mypy src
 ### Next Step
 
 - Start Lesson 6.6 and add semantic search with query embeddings and pgvector ordering.
+
+## 2026-06-25 — Lesson 6.6 — Semantic Search
+
+### Status
+
+Completed
+
+### What I Built
+
+- Added exact semantic search over stored note embeddings.
+- Used pgvector cosine distance with the `<=>` operator.
+- Ordered semantic results by smallest distance, then `created_at`, then `id`.
+- Converted cosine distance into a response score with `1 - distance`.
+- Filtered semantic search by the configured embedding model.
+- Added semantic mode to the existing `search_notes` service boundary.
+- Generated one instructed query embedding for each semantic search.
+- Rejected wrong-dimension query vectors before executing semantic SQL.
+- Added `mode=semantic` support to `GET /notes/search`.
+- Mapped semantic embedding provider and configuration failures to safe HTTP responses.
+
+### Commands Run
+
+```bash
+uv run pytest
+uv run ruff check .
+uv run mypy src
+```
+
+### Test Results
+
+- Backend `pytest`: 107 passed
+- Backend `ruff`: all checks passed
+- Backend `mypy`: no issues found in 11 source files
+
+### What I Learned
+
+- Cosine distance is an error-like distance where smaller values mean closer vectors.
+- Cosine similarity is an overlap-like similarity where larger values mean more similar vectors.
+- Semantic search needs an embedding-provider call to convert the user query into the same vector space as stored notes.
+- Keyword and semantic scores cannot be compared directly because they come from different algorithms and scales.
+- Vectors from different embedding models are not comparable, even if they have the same dimension.
+- Approximate vector indexes become useful when exact vector scans are too slow for the dataset size and latency target.
+
+### What Was Difficult
+
+- Separating query embedding generation in the service layer from vector comparison in the repository layer.
+- Understanding that pgvector `<=>` returns distance, not similarity.
+- Deciding how to expose a user-facing semantic score while keeping score semantics explicit.
+- Ensuring provider failures and wrong-dimension vectors do not execute semantic SQL.
+- Remembering to filter stored notes by embedding model before vector comparison.
+
+### Tutor Review Summary
+
+- Semantic search uses the instructed query embedding path.
+- The repository performs exact pgvector cosine-distance ordering.
+- Semantic search uses the shared `SearchResult` and API response model.
+- Wrong-dimension query vectors are rejected before repository execution.
+- Semantic provider and configuration errors are mapped safely at the API boundary.
+- No approximate vector index or reranker was introduced.
+- Backend checks pass.
+
+### Next Step
+
+- Start Lesson 6.7 and add notes plus keyword/semantic search workflows to the React UI.
