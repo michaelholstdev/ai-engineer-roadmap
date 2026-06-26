@@ -3,7 +3,9 @@ import { expect, it, vi } from "vitest";
 import {
   analyzeText,
   analyzeTextWithAI,
+  createNote,
   loadAnalysisHistory,
+  searchNotes,
 } from "./apiClient";
 
 it("sends text to the analyze endpoint and returns text statistics", async () => {
@@ -175,4 +177,78 @@ it("throws an API client error when get analyses fails", async () => {
   );
 
   await expect(loadAnalysisHistory()).rejects.toThrow("API request failed");
+});
+
+it("sends note data to the notes endpoint and returns the created note", async () => {
+  const note = {
+    id: "12345678-1234-5678-1234-567812345678",
+    title: "Postgres",
+    content: "Postgres stores relational data.",
+    embedding_model: "nomic-embed-text",
+    created_at: "2026-06-24T12:00:00Z",
+    updated_at: "2026-06-24T12:00:00Z",
+  };
+
+  const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response(JSON.stringify(note), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }),
+  );
+
+  const result = await createNote({
+    title: "Postgres",
+    content: "Postgres stores relational data.",
+  });
+
+  expect(fetchSpy).toHaveBeenCalledWith(
+    `${import.meta.env.VITE_API_BASE_URL}/notes`,
+    expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({
+        title: "Postgres",
+        content: "Postgres stores relational data.",
+      }),
+    }),
+  );
+
+  expect(result).toEqual(note);
+});
+
+it("searches notes with query mode and limit", async () => {
+  const results = [
+    {
+      id: "12345678-1234-5678-1234-567812345678",
+      title: "Postgres",
+      content: "Postgres stores relational data.",
+      embedding_model: "nomic-embed-text",
+      created_at: "2026-06-24T12:00:00Z",
+      updated_at: "2026-06-24T12:00:00Z",
+      score: 0.75,
+      search_mode: "keyword" as const,
+    },
+  ];
+
+  const fetchSpy = vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValue(
+      new Response(JSON.stringify(results), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+  const result = await searchNotes({
+    query: "relational data",
+    mode: "keyword",
+    limit: 10,
+  });
+
+  expect(fetchSpy).toHaveBeenCalledWith(
+    `${import.meta.env.VITE_API_BASE_URL}/notes/search?query=relational+data&mode=keyword&limit=10`,
+    expect.objectContaining({ method: "GET" }),
+  );
+  expect(result).toEqual(results);
 });

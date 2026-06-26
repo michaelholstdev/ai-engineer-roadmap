@@ -2391,3 +2391,61 @@ uv run mypy src
 ### Next Step
 
 - Start Lesson 6.7 and add notes plus keyword/semantic search workflows to the React UI.
+
+## 2026-06-26 — Lesson 6.7 — Notes and Search UI
+
+### Status
+
+Completed
+
+### What I Built
+
+- Added typed frontend API-client operations for creating notes and searching notes.
+- Added `NoteCreateSection` with title/content validation, loading, success, and error states.
+- Added `NoteSearchSection` with query validation, bounded result limit, and keyword/semantic mode selection.
+- Added `SearchResultsList` so keyword and semantic results share the same presentation.
+- Added frontend tests for request paths, request bodies, query parameters, validation, loading, empty, success, and error states.
+- Added UI copy clarifying that search scores are only comparable within the selected search mode.
+- Integrated the notes UI into the existing React app without changing the analysis-history feature.
+
+### Commands Run
+
+```bash
+pnpm run test
+pnpm run lint
+pnpm run build
+```
+
+### Test Results
+
+- Frontend `vitest`: passed
+- Frontend `eslint`: all checks passed
+- Frontend `build`: completed successfully
+
+### What I Learned
+
+- API-client functions keep backend paths, request bodies, query parameters, and error conversion out of components.
+- Note creation and note search need separate async states because they are independent workflows.
+- Search mode is a good segmented-control use case because only one mode can be active at a time.
+- Shared result components keep keyword and semantic result presentation consistent.
+- Keyword and semantic scores should not be presented as directly comparable because they come from different ranking methods.
+- Frontend tests can mock the API-client boundary and avoid contacting the real backend or Ollama.
+
+### What Was Difficult
+
+- Existing app tests using `getByRole("textbox")` became ambiguous after adding more input fields.
+- Keeping old success and error messages from appearing together required explicit state cleanup.
+- Deciding which state belongs in the form component and which behavior belongs in the API client.
+
+### Tutor Review Summary
+
+- The frontend has separate components for note creation, note search, and search result rendering.
+- The API-client layer exposes typed note and search functions.
+- The search UI sends the selected mode and limit.
+- Both keyword and semantic search results use the same result list component.
+- The UI includes an explicit score-comparison note.
+- Automated frontend checks pass.
+
+### Next Step
+
+- Start Lesson 6.8 and run a full-stack comparison of keyword and semantic search with the backend, database, Ollama, and React UI.

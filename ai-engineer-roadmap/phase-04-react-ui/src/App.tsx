@@ -8,6 +8,8 @@ import {
   analyzeTextWithAI,
 } from "./apiClient";
 import HistorySection from "./HistorySection";
+import NoteCreateSection from "./NoteCreateSection";
+import NoteSearchSection from "./NoteSearchSection";
 
 function App() {
   const [text, setText] = useState<string>("");
@@ -123,7 +125,12 @@ function App() {
     <main className="app">
       <h1>Text Analyzer</h1>
       <form className="analyze-form" onSubmit={handleSubmit}>
-        <textarea onChange={handleOnChangeTextarea} value={text} />
+        <label htmlFor="analysis-text">Text to analyze</label>
+        <textarea
+          id="analysis-text"
+          onChange={handleOnChangeTextarea}
+          value={text}
+        />
         {errorMessage && <p>{errorMessage}</p>}
         <button type="submit" disabled={isLoading}>
           {isLoading ? "Analyzing..." : "Analyze"}
@@ -134,6 +141,8 @@ function App() {
       </form>
       {renderResult()}
       {renderAiResult()}
+      <NoteCreateSection />
+      <NoteSearchSection />
       <HistorySection refreshKey={refreshKey} />
     </main>
   );

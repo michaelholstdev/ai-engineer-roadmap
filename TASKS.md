@@ -8,20 +8,9 @@ Phase 6 — Embeddings and Semantic Search
 
 ## Current Lesson
 
-Lesson 6.7 — Notes and Search UI
+Lesson 6.8 — Full-Stack Search Comparison
 
 ## Active Tasks
-
-### Lesson 6.7 — Notes and Search UI
-
-- [ ] Add typed note and search API-client operations.
-- [ ] Build and test the note creation form.
-- [ ] Build the search form with a keyword/semantic segmented control.
-- [ ] Render both modes with one result component.
-- [ ] Test loading, empty, success, validation, and error states.
-- [ ] Ask Codex for review.
-
-## Upcoming Tasks
 
 ### Lesson 6.8 — Full-Stack Search Comparison
 
@@ -33,6 +22,19 @@ Lesson 6.7 — Notes and Search UI
 - [ ] Update setup, verification, and troubleshooting documentation.
 - [ ] Run all automated checks.
 - [ ] Ask Codex for review.
+
+## Completed Tasks
+
+### Lesson 6.7 — Notes and Search UI
+
+- [x] Add typed note and search API-client operations.
+- [x] Build and test the note creation form.
+- [x] Build the search form with a keyword/semantic segmented control.
+- [x] Render both modes with one result component.
+- [x] Test loading, empty, success, validation, and error states.
+- [x] Ask Codex for review.
+
+## Upcoming Tasks
 
 ### Lesson 6.9 — Phase Review
 

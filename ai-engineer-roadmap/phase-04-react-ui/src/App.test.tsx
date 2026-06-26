@@ -17,10 +17,16 @@ it("renders the text analyzer form", () => {
   expect(
     screen.getByRole("heading", { name: "Text Analyzer" }),
   ).toBeInTheDocument();
-  expect(screen.getByRole("textbox")).toBeInTheDocument();
+  expect(screen.getByLabelText("Text to analyze")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Analyze" })).toBeInTheDocument();
   expect(
     screen.getByRole("button", { name: "Analyze with AI" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Create note" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "Search notes" }),
   ).toBeInTheDocument();
 });
 
@@ -54,7 +60,10 @@ it("disables the submit button while analyzing text", async () => {
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze" }));
 
   expect(screen.getByRole("button", { name: "Analyzing..." })).toBeDisabled();
@@ -81,7 +90,10 @@ it("renders text statistics after successful analysis", async () => {
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze" }));
 
   expect(await screen.findByText("Words: 4")).toBeInTheDocument();
@@ -108,7 +120,10 @@ it("shows an error message when the API request fails", async () => {
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze" }));
 
   expect(
@@ -139,11 +154,14 @@ it("does not show old results after failed api call", async () => {
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze" }));
 
   await user.type(
-    screen.getByRole("textbox"),
+    screen.getByLabelText("Text to analyze"),
     "AI Engineering is much much more fun.",
   );
   await user.click(screen.getByRole("button", { name: "Analyze" }));
@@ -158,7 +176,10 @@ it("shows an error message when the API request cannot be completed", async () =
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze" }));
 
   expect(
@@ -188,7 +209,10 @@ it("renders structured AI analysis after successful AI analysis", async () => {
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze with AI" }));
 
   expect(await screen.findByText("Short summary")).toBeInTheDocument();
@@ -220,7 +244,10 @@ it("renders not found topics and action item message when the array is empty", a
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze with AI" }));
 
   expect(await screen.findByText("Short summary")).toBeInTheDocument();
@@ -257,7 +284,10 @@ it("shows an error message when AI analysis fails", async () => {
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze with AI" }));
 
   expect(await screen.findByText("No topics found.")).toBeInTheDocument();
@@ -279,7 +309,10 @@ it("shows an error message when the AI request cannot be completed", async () =>
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze with AI" }));
 
   expect(
@@ -298,7 +331,10 @@ it("disables the AI analyze button while AI analysis is running", async () => {
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze with AI" }));
 
   expect(
@@ -324,12 +360,18 @@ it("AI run clears old stats result", async () => {
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze" }));
 
   expect(screen.getByText("Words: 10")).toBeInTheDocument();
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze with AI" }));
 
   expect(screen.queryByText("Words: 10")).not.toBeInTheDocument();
@@ -354,12 +396,18 @@ it("Stats run clears old AI result", async () => {
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze with AI" }));
 
   expect(screen.getByText("Sentiment: positive")).toBeInTheDocument();
 
-  await user.type(screen.getByRole("textbox"), "Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze" }));
 
   expect(screen.queryByText("Sentiment: positive")).not.toBeInTheDocument();
@@ -378,7 +426,10 @@ it("refreshes history after successful text analysis", async () => {
   render(<App />);
 
   expect(screen.getByTestId("history-section")).toHaveTextContent("0");
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze" }));
 
   await vi.waitFor(() => {
@@ -400,7 +451,10 @@ it("refreshes history after successful AI analysis", async () => {
 
   expect(screen.getByTestId("history-section")).toHaveTextContent("0");
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze with AI" }));
 
   await vi.waitFor(() => {
@@ -417,7 +471,10 @@ it("does not refresh history after failed text analysis", async () => {
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze" }));
 
   expect(
@@ -436,7 +493,10 @@ it("does not refresh history after failed AI analysis", async () => {
 
   render(<App />);
 
-  await user.type(screen.getByRole("textbox"), "AI Engineering is fun.");
+  await user.type(
+    screen.getByLabelText("Text to analyze"),
+    "AI Engineering is fun.",
+  );
   await user.click(screen.getByRole("button", { name: "Analyze with AI" }));
 
   expect(

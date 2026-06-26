@@ -26,6 +26,33 @@ export type AnalysisHistoryItem = {
   created_at: string;
 };
 
+export type NoteResponse = {
+  id: string;
+  title: string;
+  content: string;
+  embedding_model: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CreateNoteRequest = {
+  title: string;
+  content: string;
+};
+
+export type SearchMode = "keyword" | "semantic";
+
+export type SearchResultResponse = NoteResponse & {
+  score: number;
+  search_mode: SearchMode;
+};
+
+export type SearchNotesRequest = {
+  query: string;
+  mode: SearchMode;
+  limit: number;
+};
+
 class ApiClientError extends Error {
   constructor(message: string) {
     super(message);
@@ -99,4 +126,22 @@ export async function loadAnalysisHistory(
   limit: number = 20,
 ): Promise<AnalysisHistoryItem[]> {
   return getJson<AnalysisHistoryItem[]>(`/analyses?limit=${limit}`);
+}
+
+export async function createNote(
+  request: CreateNoteRequest,
+): Promise<NoteResponse> {
+  return postJson<NoteResponse>("/notes", request);
+}
+
+export async function searchNotes(
+  request: SearchNotesRequest,
+): Promise<SearchResultResponse[]> {
+  const params = new URLSearchParams({
+    query: request.query,
+    mode: request.mode,
+    limit: String(request.limit),
+  });
+
+  return getJson<SearchResultResponse[]>(`/notes/search?${params.toString()}`);
 }
